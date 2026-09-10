@@ -1,0 +1,26 @@
+# macOS
+.DS_Store
+**/.DS_Store
+._*
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.ipynb_checkpoints/
+
+# LaTeX / pandoc 中间产物
+*.aux
+*.log
+*.out
+*.toc
+*.tex
+
+# 临时文件
+tmp/
+scratch/
+*.tmp
+
+# 大型结果缓存（可由 work/src/run_production.py 在约 2 分钟内重建）
+work/out/*.npz
