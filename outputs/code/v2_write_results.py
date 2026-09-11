@@ -132,34 +132,51 @@ def main():
     write_xlsx(os.path.join(RESULT_DIR, "result3.xlsx"), r3b["t"], R_OUT, [C3b], ["水分浓度"])
     print("问题3 result3.xlsx (%d 行, 含终点行) 完成" % len(r3b["t"]), flush=True)
 
-    # ---------------- 问题 4：基线 ----------------
+    # ---------------- 问题 4：基线（固定物理距离列 0—2.0 cm，材料外留空 + 表面位置表）----------------
+    R_OUT4FULL = np.round(np.arange(0, 2.0001, 0.1), 4) / 100.0     # 0—2.0 cm（21 列）
     rad4 = v2.hm.RadiusLaw(t_rad, R_rad)
-    s4 = v2.LagSolver(v2.PropsV2("p4"), rad4, env, N=400,
-                      mapping="geometric", cap_mode="mass")
-    r4 = s4.run(120 * 3600.0, v2.schedule_prod, t_eval=te60)
-    t_dry4 = dry_time(r4["t"], r4["C"])
-    out["问题4_基线_烘干时长_h"] = t_dry4 / 3600
-    n4 = int(np.floor(t_dry4 / 60.0)) + 1
-    te4 = np.concatenate([np.arange(0, n4 * 60.0, 60.0), [t_dry4]])
-    r4b = s4.run(t_dry4, v2.schedule_prod, t_eval=te4)
-    _, C4 = collect(s4, r4b, R_OUT4, extra_surface=True)
-    write_xlsx(os.path.join(RESULT_DIR, "result4.xlsx"), r4b["t"], R_OUT4, [C4],
-               ["水分浓度"], last_col_label="药材表面")
-    print("问题4 result4.xlsx (基线, %.4f h) 完成" % (t_dry4 / 3600), flush=True)
 
-    # ---------------- 问题 4：v2 非均匀收缩自洽模型 ----------------
-    s5 = v2.LagSolver(v2.PropsV2("p4"), rad4, env, N=400,
-                      mapping="local", cap_mode="mass")
+    def emit_p4(tag, solver, t_dry_x, te_x):
+        rb = solver.run(t_dry_x, v2.schedule_prod, t_eval=te_x)
+        _, Cm = collect(solver, rb, R_OUT4FULL, extra_surface=True)
+        wb = openpyxl.Workbook(write_only=True)
+        ws = wb.create_sheet("水分浓度")
+        ws.append(["时间\\到药材中心的距离"] + [round(float(x), 4) for x in R_OUT4FULL] + ["药材表面"])
+        for i, tt in enumerate(rb["t"]):
+            ws.append([float(tt)] + [None if (v is None or not np.isfinite(v)) else round(float(v), 4)
+                                     for v in Cm[i]])
+        ws2 = wb.create_sheet("表面位置")
+        ws2.append(["时间\\实际半径", "实际半径/cm"])
+        for tt in rb["t"]:
+            ws2.append([float(tt), round(float(rad4.R_of(tt)) * 100, 4)])
+        wb.save(os.path.join(RESULT_DIR, tag))
+        return rb
+
+    t_dry4 = out.get("问题4_基线_烘干时长_h", None)
+    if t_dry4 is None:
+        r4 = s4.run(120 * 3600.0, v2.schedule_prod, t_eval=te60)
+        t_dry4 = dry_time(r4["t"], r4["C"]) / 3600.0
+    n4 = int(np.floor(t_dry4 * 3600 / 60.0)) + 1
+    te4 = np.concatenate([np.arange(0, n4 * 60.0, 60.0), [t_dry4 * 3600]])
+    rb4 = emit_p4("result4.xlsx", s4, t_dry4 * 3600, te4)
+    print("问题4 result4.xlsx (基线 %.4f h, 含表面位置表) 完成" % t_dry4, flush=True)
+
+    s5 = v2.LagSolver(v2.PropsV2("p4"), rad4, env, N=400, mapping="local", cap_mode="mass")
     r5 = s5.run(120 * 3600.0, v2.schedule_prod, t_eval=te60)
-    t_dry5 = dry_time(r5["t"], r5["C"])
-    out["问题4_v2非均匀收缩_烘干时长_h"] = t_dry5 / 3600
-    n5 = int(np.floor(t_dry5 / 60.0)) + 1
-    te5 = np.concatenate([np.arange(0, n5 * 60.0, 60.0), [t_dry5]])
-    r5b = s5.run(t_dry5, v2.schedule_prod, t_eval=te5)
-    _, C5 = collect(s5, r5b, R_OUT4, extra_surface=True)
-    write_xlsx(os.path.join(RESULT_DIR, "result4_local.xlsx"), r5b["t"], R_OUT4, [C5],
-               ["水分浓度"], last_col_label="药材表面")
-    print("问题4 result4_local.xlsx (v2 非均匀收缩, %.4f h) 完成" % (t_dry5 / 3600), flush=True)
+    t_dry5 = dry_time(r5["t"], r5["C"]) / 3600.0
+    out["问题4_v2非均匀收缩_烘干时长_h"] = t_dry5
+    n5 = int(np.floor(t_dry5 * 3600 / 60.0)) + 1
+    te5 = np.concatenate([np.arange(0, n5 * 60.0, 60.0), [t_dry5 * 3600]])
+    rb5 = emit_p4("result4_local.xlsx", s5, t_dry5 * 3600, te5)
+    print("问题4 result4_local.xlsx (v2 非均匀收缩 %.4f h) 完成" % t_dry5, flush=True)
+
+    # 严格整秒停止时刻
+    for tag, rr in [("问题3", r3), ("问题4基线", r4 if 'r4' in dir() else rb4)]:
+        Cmax = rr["C"].max(axis=1)
+        i = np.where(Cmax < 0.15)[0][0]
+        out["%s_整秒停止时刻_s" % tag] = float(rr["t"][i])
+        out["%s_停止时刻Cmax" % tag] = float(Cmax[i])
+        print("   %s 严格达标首秒 = %.0f s, Cmax = %.10f" % (tag, rr["t"][i], Cmax[i]), flush=True)
 
     np.savez_compressed(os.path.join(WORK_OUT, "p3_prod.npz"),
                         t=r3["t"], C=r3["C"], T=r3["T"], s=solver2.s)

@@ -5,7 +5,8 @@
 | `result_files/result1.xlsx` | 问题 1：温度 + 水分浓度，1801 个时刻（0—1800 s 每 1 s）× 21 个半径（0—2.0 cm 每 0.1 cm） |
 | `result_files/result2.xlsx` | 问题 2：**整个烘干过程**，205730 个时刻（0—205729 s 每 1 s） |
 | `result_files/result2_3h.xlsx` | 问题 2 的 0—3 h 对照（表 3/表 4 区间） |
-| `result_files/result4_local.xlsx` | 问题 4 v2 非均匀收缩模型结果 |
+| `result_files/result4_local.xlsx` | 问题 4 v2 非均匀收缩模型结果（含"表面位置"工作表） |
+| `tables/v2_compare.json` 等 | 与外部独立实现的对照实验结果（散布扫描、平均判据复核、严格停止时刻） |
 | `result_files/result3.xlsx` | 问题 3：水分浓度，3429 个时刻（0—205680 s 每 60 s）× 21 个半径 |
 | `result_files/result4.xlsx` | 问题 4 基线：水分浓度，3051 个时刻（0—182942 s 每 60 s，含终点行）× 0—1.2 cm + "药材表面" |
 | `figures/fig1_env.png` | 附件 1：烘房温度与水分浓度 |
