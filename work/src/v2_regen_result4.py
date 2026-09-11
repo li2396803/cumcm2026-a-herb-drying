@@ -24,7 +24,7 @@ def emit(tag, solver, rad, t_dry):
     C = collect(solver, rb, R_OUT)
     wb = openpyxl.Workbook(write_only=True)
     ws = wb.create_sheet("水分浓度")
-    ws.append(["时间\\到药材中心的距离"] + [round(float(x), 4) for x in R_OUT] + ["药材表面"])
+    ws.append(["时间\\到药材中心的距离"] + [round(float(x) * 100.0, 4) for x in R_OUT] + ["药材表面"])
     for i, tt in enumerate(rb["t"]):
         ws.append([float(tt)] + [None if not np.isfinite(v) else round(float(v), 4) for v in C[i]])
     ws2 = wb.create_sheet("表面位置")

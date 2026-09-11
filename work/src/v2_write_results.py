@@ -31,7 +31,7 @@ def write_xlsx(path, times, radii, mats, sheets, last_col_label=None):
     wb = openpyxl.Workbook(write_only=True)
     for name, mat in zip(sheets, mats):
         ws = wb.create_sheet(name)
-        hdr = ["时间\\到药材中心的距离"] + [round(float(x), 4) for x in radii]
+        hdr = ["时间\\到药材中心的距离"] + [round(float(x) * 100.0, 4) for x in radii]  # 表头单位 cm
         if last_col_label:
             hdr[-1] = last_col_label
         ws.append(hdr)
@@ -141,7 +141,7 @@ def main():
         _, Cm = collect(solver, rb, R_OUT4FULL, extra_surface=True)
         wb = openpyxl.Workbook(write_only=True)
         ws = wb.create_sheet("水分浓度")
-        ws.append(["时间\\到药材中心的距离"] + [round(float(x), 4) for x in R_OUT4FULL] + ["药材表面"])
+        ws.append(["时间\\到药材中心的距离"] + [round(float(x) * 100.0, 4) for x in R_OUT4FULL] + ["药材表面"])
         for i, tt in enumerate(rb["t"]):
             ws.append([float(tt)] + [None if (v is None or not np.isfinite(v)) else round(float(v), 4)
                                      for v in Cm[i]])
@@ -152,10 +152,9 @@ def main():
         wb.save(os.path.join(RESULT_DIR, tag))
         return rb
 
-    t_dry4 = out.get("问题4_基线_烘干时长_h", None)
-    if t_dry4 is None:
-        r4 = s4.run(120 * 3600.0, v2.schedule_prod, t_eval=te60)
-        t_dry4 = dry_time(r4["t"], r4["C"]) / 3600.0
+    s4 = v2.LagSolver(v2.PropsV2("p4"), rad4, env, N=400, mapping="geometric", cap_mode="mass")
+    r4 = s4.run(120 * 3600.0, v2.schedule_prod, t_eval=te60)
+    t_dry4 = out.get("问题4_基线_烘干时长_h", None) or dry_time(r4["t"], r4["C"]) / 3600.0
     n4 = int(np.floor(t_dry4 * 3600 / 60.0)) + 1
     te4 = np.concatenate([np.arange(0, n4 * 60.0, 60.0), [t_dry4 * 3600]])
     rb4 = emit_p4("result4.xlsx", s4, t_dry4 * 3600, te4)
