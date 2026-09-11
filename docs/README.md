@@ -13,7 +13,7 @@
 | `../outputs/result_files/result4.xlsx` | 问题 4 基线结果（仿射收缩）：0—182942 s 每 60 s × 0—1.2 cm + 药材表面 |
 | `../outputs/result_files/result4_local.xlsx` | 问题 4 v2 结果（非均匀收缩）：0—171435 s 每 60 s |
 | `../outputs/result_files/result2_3h.xlsx` | 问题 2 的 0—3 h 对照（表 3/表 4 区间） |
-| `../outputs/figures/` | 图 1—8（环境数据、半径收缩、问题 1—4 结果、检验、敏感性） |
+| `../outputs/figures/` | 图 1—8 + v4_fig1—9（新增：模型示意、附件数据与插值、时空场与 0.15 等值线、干燥速率场、收缩域场、收敛与剖面、响应面、二维轴对称场） |
 | `../outputs/tables/关键结果表.md` | 表 1—6 + 烘干时长 + 检验摘要（可直接粘贴进论文） |
 | `../outputs/tables/*.json` | 全部检验与敏感性原始数据 |
 | `../outputs/code/` | 全部求解、检验、校核与作图脚本 |
